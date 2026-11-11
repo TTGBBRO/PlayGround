@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Jungle Dash — Relic Run</title>
+<link rel="icon" href="data:,">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&family=Luckiest+Guy&display=swap');
+:root{--gold:#ffcf42;--ink:#172536;--cream:#fff7dd;--coral:#ff765a}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#9bd8c7;font-family:'DM Sans',sans-serif;color:white}#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;outline:0}
+#hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,30px)}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.brand{font-family:'Luckiest Guy',system-ui,sans-serif;font-size:clamp(22px,4vw,36px);line-height:.95;color:#fff4cf;text-shadow:0 3px 0 #853b28,0 6px 0 #182b36,0 8px 18px #17253666;letter-spacing:1px}.brand small{display:block;font:800 10px 'DM Sans',sans-serif;letter-spacing:3px;color:#ffe27b;text-shadow:0 2px 3px #162c36;margin-top:8px}
+.stats{display:flex;gap:8px}.pill{min-width:82px;padding:10px 14px;border:2px solid #fff9;border-radius:15px;background:#102b37c9;box-shadow:0 5px 15px #1235;backdrop-filter:blur(8px);text-align:center}.pill span{font-size:9px;font-weight:800;letter-spacing:1.5px;color:#bfd6ca;display:block}.pill b{font-size:19px;color:#fff2b0;line-height:1.3}
+.progress-wrap{position:absolute;left:50%;top:30px;transform:translateX(-50%);width:min(270px,28vw);text-align:center}.progress-label{font-size:10px;letter-spacing:2px;font-weight:800;text-shadow:0 2px 4px #123}.progress{height:8px;margin-top:8px;border-radius:8px;background:#183642a8;border:1px solid #fff8;overflow:hidden}.progress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#ff9b40,#ffe46b);border-radius:8px;box-shadow:0 0 10px #ffe46b}
+.bottom{display:flex;align-items:flex-end;justify-content:space-between}.hint{font-size:11px;font-weight:700;color:white;text-shadow:0 2px 5px #142b;letter-spacing:.3px}.hint strong{color:#ffdc67}.sound{pointer-events:auto;border:1px solid #fff8;color:#fff;background:#102b37b5;border-radius:50%;width:40px;height:40px;font-size:17px;cursor:pointer}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(90deg,#112b3870,#112b3822,#112b3870);transition:opacity .25s}.overlay.hidden{opacity:0;pointer-events:none}.card{width:min(480px,calc(100vw - 32px));padding:clamp(24px,5vw,42px);border:2px solid #fff8;border-radius:26px;background:linear-gradient(150deg,#17424bdf,#102b39ee);box-shadow:0 24px 80px #102e4c66;text-align:center;backdrop-filter:blur(12px)}.card .eyebrow{font-size:10px;font-weight:800;letter-spacing:4px;color:#8ce2bf}.card h1{font:clamp(42px,8vw,68px)/.9 'Luckiest Guy',system-ui,sans-serif;color:#ffe276;text-shadow:0 4px 0 #a64e32,0 7px 0 #172f39;margin:15px 0 17px}.card p{max-width:360px;margin:0 auto 24px;color:#d6e8df;line-height:1.55;font-size:14px}.primary{border:0;border-radius:13px;padding:14px 28px;background:linear-gradient(#ffdd63,#ffad43);color:#472f1f;font:800 14px 'DM Sans',sans-serif;letter-spacing:1.5px;cursor:pointer;box-shadow:0 5px 0 #ba6435,0 12px 25px #0004;transition:transform .15s}.primary:hover{transform:translateY(-2px)}.keys{font-size:10px;color:#a8c8bc;margin-top:20px;letter-spacing:.7px}.key{display:inline-block;border:1px solid #ffffff60;border-bottom-width:3px;border-radius:5px;padding:3px 6px;margin:0 2px;color:#fff}
+#toast{position:absolute;left:50%;top:22%;transform:translate(-50%,-10px);opacity:0;padding:10px 18px;border-radius:30px;background:#102c38dd;color:#ffe478;font-size:12px;font-weight:800;letter-spacing:1px;transition:.3s;pointer-events:none}#toast.show{opacity:1;transform:translate(-50%,0)}
+.touch{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:none;gap:12px;pointer-events:auto}.touch button{width:58px;height:58px;border:1px solid #fff9;border-radius:18px;background:#102b37a8;color:white;font-size:24px;backdrop-filter:blur(5px);touch-action:none}.touch .jump{width:78px;background:#ffbc49d9;color:#3b3020;font-size:13px;font-weight:900;letter-spacing:1px}
+@media(max-width:700px){.progress-wrap{top:94px;width:180px}.brand small{font-size:8px}.pill{min-width:64px;padding:7px 9px}.pill b{font-size:16px}.pill span{font-size:8px}.bottom .hint{display:none}.touch{display:flex}#hud{padding:16px}.sound{width:36px;height:36px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+  <div class="topbar"><div class="brand">JUNGLE DASH<small>RELIC RUN · ISLAND 01</small></div><div class="stats"><div class="pill"><span>FRUIT</span><b id="fruit">0</b></div><div class="pill"><span>MASKS</span><b id="lives">3</b></div></div></div>
+  <div class="progress-wrap"><div class="progress-label">TEMPLE TRAIL <span id="distance">0%</span></div><div class="progress"><i id="progress"></i></div></div>
+  <div class="bottom"><div class="hint"><strong>← →</strong> switch lanes &nbsp; <strong>SPACE</strong> jump &nbsp; <strong>↓</strong> slide</div><button class="sound" id="sound" aria-label="Toggle sound">♫</button></div>
+</div>
+<div id="toast">CHECKPOINT!</div>
+<div class="touch"><button id="left">◀</button><button id="jump" class="jump">JUMP</button><button id="right">▶</button></div>
+<div class="overlay" id="overlay"><div class="card"><div class="eyebrow" id="eyebrow">A WILD RUN BEGINS</div><h1 id="title">RELIC<br>RUN</h1><p id="message">Dash through the sunken jungle, snatch the wumpa fruit, and make it to the temple. Mind the gaps!</p><button class="primary" id="play">START RUN</button><div class="keys"><span class="key">←</span><span class="key">→</span> MOVE &nbsp; <span class="key">SPACE</span> JUMP &nbsp; <span class="key">↓</span> SLIDE</div></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const mount=document.querySelector('#game');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bd8c7);scene.fog=new THREE.Fog(0x9bd8c7,28,105);
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,180);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd8fff0,0x77523c,2.1));const sun=new THREE.DirectionalLight(0xffe6ae,3.2);sun.position.set(-7,15,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-24;scene.add(sun);
+const mat=(color,roughness=.82)=>new THREE.MeshStandardMaterial({color,roughness});
+const mats={sand:mat(0xc98d53),sand2:mat(0xdba763),side:mat(0x754d3b),edge:mat(0xe4b66c),leaf:mat(0x23785e),leaf2:mat(0x43a36c),trunk:mat(0x795137),rock:mat(0x667d70),gold:mat(0xffc735,.4),wood:mat(0xb86737),woodLight:mat(0xe09b4e),red:mat(0xd84e37),cream:mat(0xffedc4),orange:mat(0xf47d35),orange2:mat(0xffa34a),blue:mat(0x42c8d0),dark:mat(0x392c32),green:mat(0x43a76a)};
+const boxGeo=new THREE.BoxGeometry(1,1,1),sphereGeo=new THREE.SphereGeometry(1,16,12),cylGeo=new THREE.CylinderGeometry(.5,.5,1,10);
+function cube(parent,material,x,y,z,sx,sy,sz){const m=new THREE.Mesh(boxGeo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function ball(parent,material,x,y,z,sx,sy=sx,sz=sx){const m=new THREE.Mesh(sphereGeo,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m}
+function cylinder(parent,material,x,y,z,r1,r2,h,segments=10){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,segments),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+const world=new THREE.Group();scene.add(world);const hazardMeshes=[],fruitMeshes=[],decor=[];
+// distant layered island silhouettes
+for(let i=0;i<9;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(7+Math.random()*5,18+Math.random()*12,7),mat(i%2?0x5cae91:0x70c2a0));mountain.position.set((i-4)*14,4,-42-Math.random()*8);mountain.rotation.y=Math.random()*2;scene.add(mountain)}
+// sea beneath the suspended trail
+const sea=new THREE.Mesh(new THREE.PlaneGeometry(260,260),mat(0x56b6ad,.35));sea.rotation.x=-Math.PI/2;sea.position.set(0,-8,-76);scene.add(sea);
+// custom leaf clusters create chunky tropical silhouettes
+function palm(parent,x,z,scale=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);parent.add(g);cylinder(g,mats.trunk,0,2.3,0,.24,.37,4.6,8);ball(g,mats.leaf2,0,4.55,0,.47,.42,.48);for(let i=0;i<7;i++){const a=i*Math.PI*2/7;const leaf=cube(g,i%2?mats.leaf:mats.leaf2,Math.cos(a)*1.1,4.3+Math.sin(i*3)*.18,Math.sin(a)*1.1,2.35,.17,.42);leaf.rotation.y=-a;leaf.rotation.z=Math.sin(a)*-.32;leaf.rotation.x=Math.cos(a)*.27}for(let i=0;i<3;i++){ball(g,mats.gold,Math.cos(i*2.1)*.23,4.05,Math.sin(i*2.1)*.23,.17)}return g}
+function shrub(parent,x,z,scale=1){const g=new THREE.Group();g.position.set(x,.05,z);g.scale.setScalar(scale);parent.add(g);for(let i=0;i<5;i++){const a=i*2.4;ball(g,i%2?mats.leaf:mats.leaf2,Math.cos(a)*.42,.45+(i%3)*.1,Math.sin(a)*.35,.48,.42,.47)}return g}
+// Platforms are hand-placed in a winding island trail. Each platform has a sand top and rocky sides.
+const courseEnd=-174;const gaps=[[-43,-49],[-91,-99],[-137,-143]];
+function inGap(z){return gaps.some(([a,b])=>z<a&&z>b)}
+for(let z=6;z>=courseEnd;z-=4){if(inGap(z))continue;const platform=cube(world,mats.sand,0,-.42,z,8,.85,4.08);cube(world,mats.side,0,-.89,z,8.05,.24,4.1);cube(world,mats.edge,-3.78,.025,z, .22,.09,3.95);cube(world,mats.edge,3.78,.025,z,.22,.09,3.95);
+ // small random pebble flecks kept near path edges
+ for(let n=0;n<3;n++){const x=(Math.random()>.5?1:-1)*(2.8+Math.random()*.7);const pebble=ball(world,n%2?mats.sand2:mats.rock,x,.06,z+(Math.random()-.5)*3,.1+Math.random()*.12,.07,.12);pebble.castShadow=false}
+ if(z%16<2){palm(world,-6.8,z-1,.85+Math.random()*.25);palm(world,6.8,z+1,.75+Math.random()*.25);shrub(world,-4.8,z+2,1);shrub(world,4.8,z-2,.9)}
+}
+
+// A little destination shrine makes the finish visible from the trail.
+const gate=new THREE.Group();gate.position.set(0,0,courseEnd-3);world.add(gate);
+for(const x of [-3.6,3.6]){cube(gate,mats.wood,x,2,0,.7,4,.65);cube(gate,mats.woodLight,x,2,.36,.78,3.8,.12);cube(gate,mats.gold,x,4.15,0,.95,.28,.9)}
+cube(gate,mats.wood,0,4,0,7.6,.7,.7);cube(gate,mats.gold,0,4.38,0,3.3,.22,.85);
+for(let i=0;i<5;i++){const jewel=ball(gate,i%2?mats.blue:mats.gold,-2+i,1.15,.42,.16);}
+// Hazards: crates can be jumped; low logs can be slid under; TNT requires a lane change.
+function crate(x,z){const g=new THREE.Group();g.position.set(x,0,z);world.add(g);cube(g,mats.wood,0,.65,0,1.25,1.3,1.25);cube(g,mats.woodLight,0,.65,.64,.2,1.15,.1);cube(g,mats.woodLight,0,.65,-.64,.2,1.15,.1);cube(g,mats.woodLight,0,1.3,0,1.15,.13,1.15);cube(g,mats.wood,0,.05,0,1.3,.15,1.3);ball(g,mats.gold,0,.68,.72,.16);hazardMeshes.push({x,z,type:'jump',mesh:g})}
+function log(x,z){const g=new THREE.Group();g.position.set(x,0,z);world.add(g);const l=cylinder(g,mats.trunk,0,.48,0,.34,.34,1.5,10);l.rotation.z=Math.PI/2;for(let i=-1;i<=1;i++){ball(g,mats.woodLight,i*.38,.48,.36,.17,.22,.07)}hazardMeshes.push({x,z,type:'slide',mesh:g})}
+function tnt(x,z){const g=new THREE.Group();g.position.set(x,0,z);world.add(g);cube(g,mats.red,0,.65,0,1.25,1.3,1.25);cube(g,mats.cream,0,.67,.64,.72,.46,.08);const label=new THREE.Mesh(new THREE.PlaneGeometry(.65,.25),new THREE.MeshBasicMaterial({color:0xb83a2e}));label.position.set(0,.66,.7);g.add(label);cylinder(g,mats.dark,0,1.36,0,.15,.15,.22,8);hazardMeshes.push({x,z,type:'avoid',mesh:g})}
+[[-18,-1,crate],[-28,1,crate],[-37,0,log],[-56,-1,crate],[-62,1,log],[-70,0,crate],[-81,-1,tnt],[-86,1,crate],[-106,0,log],[-112,-1,crate],[-120,1,tnt],[-130,0,crate],[-150,-1,log],[-156,1,crate],[-164,0,tnt]].forEach(([z,lane,fn])=>fn(lane*2.35,z));
+// Fruit arcs alternate lanes, with a few rewards over each gap for brave jumpers.
+function fruit(x,y,z){const g=new THREE.Group();g.position.set(x,y,z);world.add(g);const core=ball(g,mats.gold,0,0,0,.32,.38,.28);ball(g,mat(0xff7540),.12,-.05,.05,.22,.25,.23);const leaf=cube(g,mats.leaf2,0,.39,0,.11,.25,.08);leaf.rotation.z=-.4;fruitMeshes.push({mesh:g,x,z,got:false,phase:Math.random()*6});}
+for(let z=-8;z>courseEnd+4;z-=5){const lane=[-2.35,0,2.35][Math.floor(Math.random()*3)];for(let j=0;j<3;j++)fruit(lane,.95+(j===1?.18:0),z-j*.8)}
+for(const [z,lane] of [[-43,0],[-46,0],[-49,0],[-91,2.35],[-95,2.35],[-99,2.35],[-137,-2.35],[-140,-2.35],[-143,-2.35]])fruit(lane,1.25,z);
+// Player character assembled from soft shapes; animation is driven in the update loop.
+const player=new THREE.Group();world.add(player);const avatar=new THREE.Group();player.add(avatar);
+ball(avatar,mats.orange,0,1.08,0,.47,.59,.39);ball(avatar,mats.orange2,0,1.77,-.03,.49,.5,.42);
+// muzzle, ears and expressive eyes
+ball(avatar,mats.orange,0,1.59,.34,.38,.27,.25);ball(avatar,mats.cream,0,1.57,.54,.24,.14,.08);ball(avatar,mats.dark,0,1.53,.61,.09,.055,.04);
+for(const s of [-1,1]){ball(avatar,mats.orange2,s*.39,2.08,-.03,.14,.3,.14);ball(avatar,mats.cream,s*.17,1.86,.34,.12,.17,.08);ball(avatar,mats.dark,s*.17,1.85,.414,.055,.1,.035);ball(avatar,mats.orange2,s*.4,1.26,.04,.18,.22,.18);ball(avatar,mats.cream,s*.45,.68,.08,.23,.12,.27)}
+// blue shorts, bandana and a tiny feather
+cube(avatar,mats.blue,0,.7,0,.62,.34,.52);cube(avatar,mat(0x238b9c),0,.87,0,.66,.1,.56);ball(avatar,mats.red,0,1.92,-.31,.48,.1,.2);
+const feather=ball(avatar,mats.leaf2,.03,2.28,-.05,.11,.36,.1);feather.rotation.z=-.32;
+const legs=[];for(const s of [-1,1]){const leg=cylinder(avatar,mats.orange,s*.2,.36,0,.11,.13,.35,8);legs.push(leg)}
+player.position.set(0,0,1);player.castShadow=true;
+
+const TOTAL=175;let running=false,paused=false,score=0,lives=3,travel=0,playerSpeed=9.6,vy=0,grounded=true,slideTime=0,checkpoint=-1,shake=0,elapsed=0;
+let lane=0,targetX=0;const keys={};
+const overlay=document.querySelector('#overlay'),titleEl=document.querySelector('#title'),eyebrow=document.querySelector('#eyebrow'),messageEl=document.querySelector('#message'),playBtn=document.querySelector('#play');
+const fruitEl=document.querySelector('#fruit'),livesEl=document.querySelector('#lives'),progressEl=document.querySelector('#progress'),distanceEl=document.querySelector('#distance'),toast=document.querySelector('#toast');
+let audio=null,muted=false;
+function beep(freq=520,duration=.08,type='sine',volume=.035){if(muted)return;try{audio??=new AudioContext();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
+function announce(text){toast.textContent=text;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1250)}
+function showOverlay(mode){overlay.classList.remove('hidden');if(mode==='start'){eyebrow.textContent='A WILD RUN BEGINS';titleEl.innerHTML='RELIC<br>RUN';messageEl.textContent='Dash through the sunken jungle, snatch the wumpa fruit, and make it to the temple. Mind the gaps!';playBtn.textContent='START RUN'}else if(mode==='dead'){eyebrow.textContent='THE JUNGLE WINS THIS ROUND';titleEl.innerHTML='RUN<br>OVER';messageEl.textContent=`You collected ${score} fruit. Catch your breath and take another shot at the temple.`;playBtn.textContent='TRY AGAIN'}else{eyebrow.textContent='TEMPLE RAID COMPLETE';titleEl.innerHTML='RELIC<br>FOUND!';messageEl.textContent=`Beautiful run! You made it to the temple with ${score} fruit.`;playBtn.textContent='RUN AGAIN'}}
+function resetGame(){score=0;lives=3;travel=0;lane=0;targetX=0;vy=0;grounded=true;slideTime=0;checkpoint=-1;player.position.set(0,0,1);avatar.rotation.set(0,0,0);fruitMeshes.forEach(f=>{f.got=false;f.mesh.visible=true});hazardMeshes.forEach(h=>h.mesh.visible=true);fruitEl.textContent='0';livesEl.textContent='3';progressEl.style.width='0%';distanceEl.textContent='0%';running=true;paused=false;overlay.classList.add('hidden');beep(640,.12,'triangle')}
+function startJump(){if(!running||paused||!grounded)return;vy=8.9;grounded=false;beep(390,.09,'triangle')}
+function changeLane(dir){if(!running||paused)return;lane=Math.max(-1,Math.min(1,lane+dir));targetX=lane*2.35;}
+function slide(){if(running&&!paused&&grounded){slideTime=.62;beep(220,.05,'square',.018)}}
+function inputDown(e){if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','a','d','w','s'].includes(e.key))e.preventDefault();if(keys[e.key])return;keys[e.key]=true;if(e.key==='ArrowLeft'||e.key==='a')changeLane(-1);if(e.key==='ArrowRight'||e.key==='d')changeLane(1);if(e.key===' '||e.key==='ArrowUp'||e.key==='w')startJump();if(e.key==='ArrowDown'||e.key==='s')slide();if(e.key==='Escape'&&running){paused=!paused;if(paused)announce('PAUSED · PRESS ESC TO RESUME')}}
+function inputUp(e){keys[e.key]=false}
+addEventListener('keydown',inputDown);addEventListener('keyup',inputUp);addEventListener('blur',()=>{keys[' ']=false});
+document.querySelector('#left').addEventListener('pointerdown',e=>{e.preventDefault();changeLane(-1)});document.querySelector('#right').addEventListener('pointerdown',e=>{e.preventDefault();changeLane(1)});document.querySelector('#jump').addEventListener('pointerdown',e=>{e.preventDefault();startJump()});
+document.querySelector('#sound').addEventListener('click',()=>{muted=!muted;document.querySelector('#sound').textContent=muted?'♫̸':'♫'});
+playBtn.addEventListener('click',resetGame);
+function isGap(z){return gaps.some(([a,b])=>z<a+.2&&z>b-.2)}
+function hurt(){lives--;livesEl.textContent=String(lives);shake=.48;beep(105,.35,'sawtooth',.045);if(lives<=0){running=false;showOverlay('dead');return}player.position.z=checkpoint<0?1:checkpoint;travel=checkpoint<0?0:Math.abs(checkpoint-1);lane=0;targetX=0;player.position.x=0;player.position.y=0;vy=0;grounded=true;announce(checkpoint<0?'MASK LOST · TRY AGAIN':'CHECKPOINT · KEEP GOING')}
+function update(dt){elapsed+=dt;if(!running||paused)return;const safeDt=Math.min(dt,.04);travel+=playerSpeed*safeDt;player.position.z=1-travel;player.position.x+= (targetX-player.position.x)*Math.min(1,safeDt*13);
+ // Jump arc and fall detection over the breaks.
+ if(!grounded){vy-=21*safeDt;player.position.y+=vy*safeDt;if(player.position.y<=0){player.position.y=0;vy=0;grounded=true}}
+ slideTime=Math.max(0,slideTime-safeDt);const crouch=slideTime>0?0.57:1;avatar.scale.y+=(crouch-avatar.scale.y)*Math.min(1,safeDt*18);
+ if(isGap(player.position.z)&&player.position.y<.03){hurt();if(!running)return}else if(player.position.z<courseEnd-1){running=false;showOverlay('win');beep(780,.3,'triangle')}
+ // Obstacles are generous to read but still demand a clear jump, slide, or lane change.
+ for(const h of hazardMeshes){if(!h.mesh.visible)continue;if(Math.abs(player.position.z-h.z)<.72&&Math.abs(player.position.x-h.x)<.92){const passed=h.type==='jump'?player.position.y>.48:h.type==='slide'?slideTime>0:false;if(!passed){if(h.type==='jump')h.mesh.visible=false;hurt();if(!running)return;break}}}
+ for(const f of fruitMeshes){if(f.got)continue;f.mesh.rotation.y+=safeDt*1.6;f.mesh.position.y=f.y+Math.sin(elapsed*3+f.phase)*.1;if(Math.abs(player.position.z-f.z)<.85&&Math.abs(player.position.x-f.x)<.82&&Math.abs(player.position.y+1-f.y)<1.05){f.got=true;f.mesh.visible=false;score++;fruitEl.textContent=String(score);beep(760+Math.min(score,12)*22,.085,'sine',.025)}}
+ for(const cp of [-83,-128]){if(checkpoint>cp&&travel>=Math.abs(cp-1)){checkpoint=cp;announce('CHECKPOINT REACHED');beep(610,.18,'triangle')}}
+ const progress=Math.min(100,travel/TOTAL*100);progressEl.style.width=`${progress}%`;distanceEl.textContent=`${Math.floor(progress)}%`;
+ // Run cycle, squash on landing, and camera follow with a tiny cinematic impact shake.
+ const stride=Math.sin(elapsed*15)*(grounded?1:.2);legs.forEach((leg,i)=>{leg.rotation.x=stride*(i===0?1:-1)*.7});avatar.rotation.z+=(Math.sin(elapsed*7)*.035-avatar.rotation.z)*safeDt*4;avatar.position.y=grounded?Math.abs(Math.sin(elapsed*15))*.055:0;
+ camera.position.x+=(player.position.x*.32-camera.position.x)*safeDt*2.2;camera.position.y+=(5.8+player.position.y*.2-camera.position.y)*safeDt*2.5;camera.position.z+=(player.position.z+9.4-camera.position.z)*safeDt*3.2;
+ const target=new THREE.Vector3(player.position.x*.22,1.05+player.position.y*.16,player.position.z-5);if(shake>0){shake=Math.max(0,shake-safeDt);target.x+=(Math.random()-.5)*shake*1.5;target.y+=(Math.random()-.5)*shake}camera.lookAt(target);
+}
+const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=clock.getDelta();update(dt);renderer.render(scene,camera)}frame();
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}addEventListener('resize',resize);
+showOverlay('start');
+</script>
+</body>
+</html>
